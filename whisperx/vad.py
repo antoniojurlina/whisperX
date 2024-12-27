@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from .diarize import Segment as SegmentX
 
+EXPECTED_CHECKSUM = "0b5b3216d60a2d32fc086b47ea8c67589aaeb26b7e07fcbe620d6d0b83e209ea"
 VAD_SEGMENTATION_URL = "https://github.com/m-bain/whisperX/raw/refs/heads/main/whisperx/assets/pytorch_model.bin"
 
 def load_vad_model(device, vad_onset=0.500, vad_offset=0.363, use_auth_token=None, model_fp=None):
@@ -39,12 +40,9 @@ def load_vad_model(device, vad_onset=0.500, vad_offset=0.363, use_auth_token=Non
 
     model_bytes = open(model_fp, "rb").read()
     actual_checksum = hashlib.sha256(model_bytes).hexdigest()
-    expected_checksum = VAD_SEGMENTATION_URL.split('/')[-2]
-    print(f"Expected checksum: {expected_checksum}")
-    print(f"Actual checksum: {actual_checksum}")
-    if actual_checksum != expected_checksum:
+    if actual_checksum != EXPECTED_CHECKSUM:
         raise RuntimeError(
-            f"Model has been downloaded but the SHA256 checksum does not match.\nExpected: {expected_checksum}\nGot: {actual_checksum}"
+            f"Model has been downloaded but the SHA256 checksum does not match.\nExpected: {EXPECTED_CHECKSUM}\nGot: {actual_checksum}"
         )
 
     vad_model = Model.from_pretrained(model_fp, use_auth_token=use_auth_token)
