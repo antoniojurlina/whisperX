@@ -37,6 +37,15 @@ def load_vad_model(device, vad_onset=0.500, vad_offset=0.363, use_auth_token=Non
     if os.path.exists(model_fp) and not os.path.isfile(model_fp):
         raise RuntimeError(f"{model_fp} exists and is not a regular file")
 
+    with urllib.request.urlopen(VAD_SEGMENTATION_URL) as source, open(model_fp, "wb") as output:
+        model_bytes = source.read()
+        # Add these debug lines
+        actual_checksum = hashlib.sha256(model_bytes).hexdigest()
+        expected_checksum = VAD_SEGMENTATION_URL.split('/')[-2]  # This is what the code expects
+        print(f"Expected checksum: {expected_checksum}")
+        print(f"Actual checksum: {actual_checksum}")
+        output.write(model_bytes)
+
     model_bytes = open(model_fp, "rb").read()
     if hashlib.sha256(model_bytes).hexdigest() != VAD_SEGMENTATION_URL.split('/')[-2]:
         raise RuntimeError(
