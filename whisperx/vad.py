@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from .diarize import Segment as SegmentX
 
-VAD_SEGMENTATION_URL = "https://github.com/m-bain/whisperX/blob/main/whisperx/assets/pytorch_model.bin"
+VAD_SEGMENTATION_URL = "https://github.com/m-bain/whisperX/raw/refs/heads/main/whisperx/assets/pytorch_model.bin"
 
 def load_vad_model(device, vad_onset=0.500, vad_offset=0.363, use_auth_token=None, model_fp=None):
     model_dir = torch.hub._get_torch_home()
