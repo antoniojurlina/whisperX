@@ -7,6 +7,10 @@ import os
 
 from .audio import load_audio, SAMPLE_RATE
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class DiarizationPipeline:
     def __init__(
         self,
@@ -14,6 +18,7 @@ class DiarizationPipeline:
         use_auth_token=None,
         device: Optional[Union[str, torch.device]] = "cpu",
     ):
+        logger.info("Initializing DiarizationPipeline...")
         if isinstance(device, str):
             device = torch.device(device)
         
@@ -21,11 +26,25 @@ class DiarizationPipeline:
         _, model_version = model_name.split('/')
         model_path = os.path.join(os.environ["MODELS_BASE_PATH"], model_version)
         
+        logger.info(f"Loading model from path: {model_path}")
+        logger.info(f"Directory contents: {os.listdir(model_path)}")
+        
         # Initialize pipeline from local path
-        self.model = Pipeline.from_pretrained(
-            model_path,
-            use_auth_token=None  # No token needed for local files
-        ).to(device)
+        try:
+            logger.info("Attempting to load Pipeline...")
+            self.model = Pipeline.from_pretrained(
+                model_path,
+                use_auth_token=None
+            )
+            logger.info("Pipeline loaded successfully")
+            
+            logger.info(f"Moving model to device: {device}")
+            self.model = self.model.to(device)
+            logger.info("Model successfully moved to device")
+            
+        except Exception as e:
+            logger.error(f"Failed to load model: {str(e)}")
+            raise
 
     def __call__(self, audio: Union[str, np.ndarray], num_speakers=None, min_speakers=None, max_speakers=None):
         if isinstance(audio, str):
