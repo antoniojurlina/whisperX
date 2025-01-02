@@ -171,7 +171,7 @@ class FasterWhisperPipeline(Pipeline):
         return final_iterator
 
     def transcribe(
-        self, audio: Union[str, np.ndarray], batch_size=None, num_workers=0, language=None, task=None, chunk_size=30, print_progress = False, combined_progress=False
+        self, audio: Union[str, np.ndarray], batch_size=None, num_workers=0, language=None, task=None, chunk_size=30, print_progress = False, combined_progress=False, verbose=False
     ) -> TranscriptionResult:
         if isinstance(audio, str):
             audio = load_audio(audio)
@@ -223,6 +223,8 @@ class FasterWhisperPipeline(Pipeline):
             text = out['text']
             if batch_size in [0, 1, None]:
                 text = text[0]
+            if verbose:
+                print(f"Transcript: [{round(vad_segments[idx]['start'], 3)} --> {round(vad_segments[idx]['end'], 3)}] {text}")
             segments.append(
                 {
                     "text": text,
@@ -267,6 +269,7 @@ def load_model(whisper_arch,
                model : Optional[WhisperModel] = None,
                task="transcribe",
                download_root=None,
+               local_files_only=False,
                threads=4):
     '''Load a Whisper model for inference.
     Args:
@@ -277,6 +280,7 @@ def load_model(whisper_arch,
         language: str - The language of the model. (use English for now)
         model: Optional[WhisperModel] - The WhisperModel instance to use.
         download_root: Optional[str] - The root directory to download the model to.
+        local_files_only: bool - If `True`, avoid downloading the file and return the path to the local cached file if it exists.
         threads: int - The number of cpu threads to use per worker, e.g. will be multiplied by num workers.
     Returns:
         A Whisper pipeline.
@@ -290,6 +294,7 @@ def load_model(whisper_arch,
                          device_index=device_index,
                          compute_type=compute_type,
                          download_root=download_root,
+                         local_files_only=local_files_only,
                          cpu_threads=threads)
     if language is not None:
         tokenizer = faster_whisper.tokenizer.Tokenizer(model.hf_tokenizer, model.model.is_multilingual, task=task, language=language)
@@ -319,10 +324,12 @@ def load_model(whisper_arch,
         "word_timestamps": False,
         "prepend_punctuations": "\"'“¿([{-",
         "append_punctuations": "\"'.。,，!！?？:：”)]}、",
+        "multilingual": model.model.is_multilingual,
         "suppress_numerals": False,
         "max_new_tokens": None,
         "clip_timestamps": None,
         "hallucination_silence_threshold": None,
+        "hotwords": None,
     }
 
     if asr_options is not None:
