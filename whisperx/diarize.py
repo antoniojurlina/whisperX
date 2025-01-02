@@ -3,9 +3,9 @@ import pandas as pd
 from pyannote.audio import Pipeline
 from typing import Optional, Union
 import torch
+import os
 
 from .audio import load_audio, SAMPLE_RATE
-
 
 class DiarizationPipeline:
     def __init__(
@@ -16,7 +16,16 @@ class DiarizationPipeline:
     ):
         if isinstance(device, str):
             device = torch.device(device)
-        self.model = Pipeline.from_pretrained(model_name, use_auth_token=use_auth_token).to(device)
+        
+        # Extract the model name without the org prefix
+        _, model_version = model_name.split('/')
+        model_path = os.path.join(os.environ["MODELS_BASE_PATH"], model_version)
+        
+        # Initialize pipeline from local path
+        self.model = Pipeline.from_pretrained(
+            model_path,
+            use_auth_token=None  # No token needed for local files
+        ).to(device)
 
     def __call__(self, audio: Union[str, np.ndarray], num_speakers=None, min_speakers=None, max_speakers=None):
         if isinstance(audio, str):
